@@ -12,6 +12,8 @@ namespace BTO218.BrainWorkshop.Objects
     {
         private static string AppDataPath = "\\App_Data";
         private static string SettingsName = "user_settings.json";
+        private static string DataFileName = "BTO218Veri.dat";
+
         public static string UserSettingsPath
         {
             get
@@ -19,6 +21,12 @@ namespace BTO218.BrainWorkshop.Objects
                 return Application.StartupPath + string.Format("{0}\\{1}", AppDataPath, SettingsName);
             }
         }
-
+        public static string DataPath
+        {
+            get
+            {
+                return Application.StartupPath + string.Format("{0}\\{1}", AppDataPath, DataFileName);
+            }
+        }
     }
 }

@@ -7,24 +7,32 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace BTO218.BrainWorkshop
 {
     public partial class GameForm : Form
     {
-        public GameForm()
+        public GameForm(string userId, MainForm parent)
         {
+            uSettings = UserHelper.LoadSettings(userId);
+            nBackLevel = uSettings.Level;
+            mainForm = parent;
             InitializeComponent();
         }
+        MainForm mainForm { get; set; }
         UserSettings uSettings { get; set; }
         int sessionCount = 21;
         int nBackLevel = 1;
         int currentSession = 1;
+        bool is_running = true;
+        //  int[] answeredSessions = int[20];
         List<GameMaterial> materialList = new List<GameMaterial>();
         Timer sessionTimer;
         Timer animationTimer;
+        int availableColorMatch, availablePositionMatch, availableTotalMatch, correctMatch = 0;
+        List<int> usedColorMatches = new List<int>();
+        List<int> usedPositionMatches = new List<int>();
         private void GameForm_Load(object sender, EventArgs e)
         {
             InitGame();
@@ -34,7 +42,7 @@ namespace BTO218.BrainWorkshop
             animationTimer = new Timer();
             animationTimer.Interval = 400;
             animationTimer.Tick += animationTimer_Tick;
-            sessionTimer.Start();    
+            sessionTimer.Start();
 
         }
 
@@ -48,55 +56,116 @@ namespace BTO218.BrainWorkshop
         void sessionTimer_Tick(object sender, EventArgs e)
         {
             InitSessionText();
-            DrawRectangle(materialList[currentSession - 1]);
-            animationTimer.Start();
+            GetGameMaterial();
             currentSession++;
+            animationTimer.Start();
             if (currentSession == sessionCount)
             {
-                sessionTimer.Stop();
-                lbl_game_info.Text = "Tur bitti.";
+                stopSession();
             }
-        }
 
+
+        }
+        void stopSession()
+        {
+            sessionTimer.Stop();
+            lbl_game_info.Text = "Tur bitti.";
+            if (usedColorMatches.Count() == 0 && usedPositionMatches.Count() == 0)
+                usedColorMatches.Add(0);
+            double successRate = (100 / (usedColorMatches.Count() + usedPositionMatches.Count())) * correctMatch;
+            if (successRate >= 80)
+            {
+                MessageBox.Show(String.Format("Başarı yüzdeniz {0}\nBir sonraki seviyeye geçtiniz.", int.Parse(Math.Ceiling(successRate).ToString())), "TEBRİKLER", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                uSettings.Level += 1;
+                UserHelper.SaveSettings(uSettings);
+            }
+            else
+            {
+                MessageBox.Show(String.Format("Başarı yüzdeniz {0}\nBu seviyeyi tekrar etmelisiniz.", int.Parse(Math.Ceiling(successRate).ToString())), "SEVİYE TEKRARI", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            //save user data
+            UserHelper.SaveData(uSettings, int.Parse(Math.Ceiling(successRate).ToString()));
+            this.Close();
+            GameForm gf = new GameForm(uSettings.UserId, mainForm);
+            gf.Show();
+        }
+        void GetGameMaterial()
+        {
+            lbl_instructions.ForeColor = Color.Black;
+            lbl_instructions_2.ForeColor = Color.Black;
+            DrawRectangle(materialList[currentSession - 1]);
+
+        }
+        private void InitGameText()
+        {
+            if (uSettings.IsColorEnabled && uSettings.IsPositionEnabled)
+            {
+                lbl_game_info.Text = String.Format("Çiftli Beyin Egzersizi, Seviye : {0}-Geri", nBackLevel);
+                lbl_instructions_2.Text = "Sağ tuş : Pozisyon eşleşmesi";
+                lbl_instructions.Text = "Sol tuş : Renk eşleşmesi";
+
+            }
+            else
+            {
+                lbl_game_info.Text = String.Format("Beyin Egzersizi, Seviye : {0}-Geri", nBackLevel);
+                lbl_instructions.Text = "Sol tuş : Eşleşme";
+                lbl_instructions_2.Text = "";
+
+            }
+            this.Text = lbl_game_info.Text;
+        }
         private void InitGame()
         {
-            uSettings = UserHelper.LoadSettings();
-            if (uSettings.IsPositionEnabled && uSettings.IsAudioEnabled && uSettings.IsColorEnabled)
+            InitGameText();
+            materialList.Clear();
+            if (uSettings.IsColorEnabled && uSettings.IsPositionEnabled)
             {
-                //hardest game. triple
+                while (availableTotalMatch < 10)
+                { InitGameMaterialList(); }
             }
-            else if (uSettings.IsPositionEnabled && uSettings.IsColorEnabled)
+            else
             {
+                while (availableTotalMatch < 7)
+                { InitGameMaterialList(); }
+            }
 
-            }
-            else if (uSettings.IsColorEnabled && uSettings.IsAudioEnabled)
-            {
-
-            }
-            else if (uSettings.IsPositionEnabled && uSettings.IsAudioEnabled)
-            {
-
-            }
-            else if (uSettings.IsColorEnabled)
-            {
-
-            }
-            else if (uSettings.IsPositionEnabled)
-            {
-                Random r = new Random();
-                Colorizer c = new Colorizer();
-                for (int i = 0; i < sessionCount; i++)
-                {
-                    materialList.Add(new GameMaterial() { color = c.getRandomColor(), PositionNumber = r.Next(1, 10) });
-                }
-            }
-            else if (uSettings.IsAudioEnabled)
-            {
-
-            }
             InitSessionText();
         }
 
+        void InitGameMaterialList()
+        {
+            Random r = new Random();
+            Colorizer c = new Colorizer();
+            for (int i = 0; i < sessionCount; i++)
+            {
+
+                //Init game by modes selected by user.
+                if (uSettings.IsPositionEnabled && uSettings.IsColorEnabled)
+                    materialList.Add(new GameMaterial() { color = c.getRandomColor(), PositionNumber = r.Next(1, 10) });
+                else if (uSettings.IsColorEnabled)
+                    materialList.Add(new GameMaterial() { color = c.getRandomColor(), PositionNumber = 5 });
+                else if (uSettings.IsPositionEnabled)
+                    materialList.Add(new GameMaterial() { color = Color.Blue, PositionNumber = r.Next(1, 10) });
+
+            }
+            InitMatchCounts();
+        }
+        void InitMatchCounts()
+        {
+
+            for (int i = 0; i < sessionCount - nBackLevel; i++)
+            {
+                if (uSettings.IsColorEnabled)
+                    if (materialList[i].color == materialList[i + nBackLevel].color)
+                        availableColorMatch++;
+                if (uSettings.IsPositionEnabled)
+                    if (materialList[i].PositionNumber == materialList[i + nBackLevel].PositionNumber)
+                        availablePositionMatch++;
+            }
+
+
+            availableTotalMatch = availableColorMatch + availablePositionMatch;
+        }
         private void game_panel_Paint(object sender, PaintEventArgs e)
         {
 
@@ -119,15 +188,45 @@ namespace BTO218.BrainWorkshop
         }
         void LeftButtonClicked()
         {
+            if (!is_running)
+                return;
+            if (uSettings.IsColorEnabled && uSettings.IsPositionEnabled)
+            {
+                if (IsColorMatch())
+                    CorrectColorMatch();
+                else WrongColorMatch();
+
+            }
+            else if (uSettings.IsColorEnabled)
+            {
+                if (IsColorMatch())
+                    CorrectColorMatch();
+                else WrongColorMatch();
+            }
+            else
+            {
+                if (IsPositionMatch())
+                    CorrectPositionMatch();
+                else WrongPositionMatch();
+            }
 
         }
         void RightButtonClicked()
         {
+            if (!is_running)
+                return;
+            if (uSettings.IsColorEnabled && uSettings.IsPositionEnabled)
+            {
 
+                if (IsPositionMatch())
+                    CorrectPositionMatch();
+                else WrongPositionMatch();
+
+            }
         }
         public void DrawRectangle(GameMaterial material)
         {
-          
+
             using (Graphics g = this.game_panel.CreateGraphics())
             {
                 int rowNumber = (((double)material.PositionNumber) / 3) % 1 == 0 ?
@@ -143,7 +242,113 @@ namespace BTO218.BrainWorkshop
 
         void InitSessionText()
         {
-            lbl_object_info.Text = String.Format("{0} / {1}", currentSession, sessionCount);
+            lbl_object_info.Text = String.Format("{0} / {1}", currentSession, sessionCount - 1);
+        }
+
+        private void btn_pause_Click(object sender, EventArgs e)
+        {
+            if (is_running)
+            {
+                is_running = false;
+                btn_pause.Text = "Devam Et";
+                sessionTimer.Stop();
+            }
+            else
+            {
+                btn_pause.Text = "Durdur";
+                is_running = true;
+                sessionTimer.Start();
+
+            }
+
+        }
+
+        private void btn_main_Click(object sender, EventArgs e)
+        {
+            mainForm.Show();
+            this.Close();
+        }
+        private void GameForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            animationTimer.Stop();
+            sessionTimer.Stop();
+        }
+
+
+
+        bool IsColorMatch()
+        {
+            if (usedColorMatches.Contains(currentSession - 2))
+                return false;
+            int materialIndex = (currentSession - 2) - nBackLevel;
+            if (materialIndex < 0)
+            {
+                return false;
+            }
+            usedColorMatches.Add(currentSession - 2);
+            if (materialList[materialIndex].color == materialList[currentSession - 2].color)
+                return true;
+            return false;
+        }
+        void WrongColorMatch()
+        {
+
+            BlindLabel(lbl_instructions, Color.Red);
+        }
+        void CorrectColorMatch()
+        {
+            correctMatch++;
+            BlindLabel(lbl_instructions, Color.Green);
+
+        }
+        bool IsPositionMatch()
+        {
+
+            if (usedPositionMatches.Contains(currentSession - 2))
+            { return false; }
+            int materialIndex = (currentSession - 2) - nBackLevel;
+            if (materialIndex < 0)
+            {
+                return false;
+            }
+            usedPositionMatches.Add(currentSession - 2);
+            if (materialList[materialIndex].PositionNumber == materialList[currentSession - 2].PositionNumber)
+                return true;
+            return false;
+        }
+        void WrongPositionMatch()
+        {
+            if (uSettings.IsColorEnabled)
+                BlindLabel(lbl_instructions_2, Color.Red);
+            else
+                BlindLabel(lbl_instructions, Color.Red);
+        }
+        void CorrectPositionMatch()
+        {
+            correctMatch++;
+            if (uSettings.IsColorEnabled)
+                BlindLabel(lbl_instructions_2, Color.Green);
+            else
+                BlindLabel(lbl_instructions, Color.Green);
+
+        }
+
+        void BlindLabel(Label lbl, Color color)
+        {
+            lbl.ForeColor = color;
+            Timer t1 = new Timer();
+            t1.Interval = 500;
+            t1.Tick += delegate
+            {
+                lbl.ForeColor = Color.Black;
+                t1.Stop();
+            };
+            t1.Start();
+        }
+
+        private void btn_exit_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
         }
     }
 }

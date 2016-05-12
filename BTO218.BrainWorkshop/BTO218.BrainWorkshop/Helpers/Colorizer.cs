@@ -18,13 +18,12 @@ namespace BTO218.BrainWorkshop.Helpers
             colorArray[1] = Color.Green;
             colorArray[2] = Color.Blue;
             colorArray[3] = Color.Yellow;
-            colorArray[4] = Color.Orange;
-            colorArray[5] = Color.Purple;
+
         }
         private Color[] colorArray;
         public Color getRandomColor()
         {
-            return colorArray[r.Next(0, 6)];
+            return colorArray[r.Next(0, 4)];
         }
     }
 }

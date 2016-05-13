@@ -54,6 +54,11 @@ namespace BTO218.BrainWorkshop
 
         private void button_begin_game_Click(object sender, EventArgs e)
         {
+            if (!uSettings.IsColorEnabled && !uSettings.IsPositionEnabled)
+            {
+                MessageBox.Show("Oyun türü seçmelisiniz.", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             if (!ValidateName())
             {
                 MessageBox.Show("Adınızı ve soyadınızı doğru olarak girmelisiniz", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Warning);

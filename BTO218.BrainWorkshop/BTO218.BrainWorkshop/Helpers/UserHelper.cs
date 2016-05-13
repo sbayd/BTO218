@@ -17,7 +17,10 @@ namespace BTO218.BrainWorkshop.Helpers
             if (string.IsNullOrEmpty(UserId))
                 UserId = "default";
             var allSettings = LoadAllSettings();
-            return allSettings.Count > 1 ? allSettings.FirstOrDefault(x => x.UserId == UserId) : allSettings.First();
+            if (allSettings.Count > 1 && UserId != "default")
+                return allSettings.FirstOrDefault(x => x.UserId == UserId);
+            else
+                return allSettings.LastOrDefault();
 
         }
         private static List<UserSettings> LoadAllSettings()
@@ -103,10 +106,10 @@ namespace BTO218.BrainWorkshop.Helpers
         {
             try
             {
-               
-                using (StreamWriter sw = new StreamWriter(AppConfig.DataPath,true))
+
+                using (StreamWriter sw = new StreamWriter(AppConfig.DataPath, true))
                 {
-                    sw.WriteLine(String.Format("{0};{1};{2};{3};{4};{5}",DateTime.Now.ToShortDateString(),DateTime.Now.ToShortTimeString(),"BELLEK","N-Back Testi",settings.Name+" "+settings.Surname,point));
+                    sw.WriteLine(String.Format("{0};{1};{2};{3};{4};{5}", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString(), "BELLEK", "N-Back Testi", settings.Name + " " + settings.Surname, point));
                     sw.Close();
                 }
 
@@ -114,7 +117,7 @@ namespace BTO218.BrainWorkshop.Helpers
             }
             catch (Exception ex)
             {
-                
+
                 return false;
             }
         }

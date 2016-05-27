@@ -23,9 +23,13 @@ namespace BTO218.BrainWorkshop
         UserSettings uSettings { get; set; }
         private void MainForm_Load(object sender, EventArgs e)
         {
+            //JSon dosyalarından ayarları çekip nesnelere yazıyoruz.
+            ConfigHelper.InitConfig();
             InitSettings();
         }
-
+        /// <summary>
+        /// Kullanıcının ayarlarını veri tabanından çekiyoruz.
+        /// </summary>
         private void InitSettings()
         {
             uSettings = UserHelper.LoadSettings(txt_email.Text);
@@ -45,15 +49,21 @@ namespace BTO218.BrainWorkshop
             UserHelper.SaveSettings(uSettings);
         }
 
+        //Değişimlerde kullanıcı ayarlarını güncelliyoruz.
         private void checkbox_color_CheckedChanged(object sender, EventArgs e)
         {
             uSettings.IsColorEnabled = !uSettings.IsColorEnabled;
             UserHelper.SaveSettings(uSettings);
         }
 
-
+        //Oyunu başlatan fonksiyon.
         private void button_begin_game_Click(object sender, EventArgs e)
         {
+            if (!uSettings.IsColorEnabled && !uSettings.IsPositionEnabled)
+            {
+                MessageBox.Show("Oyun türü seçmelisiniz.", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             if (!ValidateName())
             {
                 MessageBox.Show("Adınızı ve soyadınızı doğru olarak girmelisiniz", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -83,6 +93,8 @@ namespace BTO218.BrainWorkshop
             gameForm.Show();
         }
 
+
+        // Aşağıdaki fonksiyonlar validasyonları yapıyor.
         private bool ValidateName()
         {
             if (string.IsNullOrEmpty(txt_name.Text))
@@ -147,6 +159,15 @@ namespace BTO218.BrainWorkshop
                 invalid = true;
             }
             return match.Groups[1].Value + domainName;
+        }
+
+        private void btn_settings_Click(object sender, EventArgs e)
+        {
+            //Ayarlar formunu açıyoruz.
+            Config conf = ConfigHelper.GetConfig();
+            SettingsForm sf = new SettingsForm(conf);
+
+            sf.ShowDialog();
         }
     }
 }

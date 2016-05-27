@@ -9,27 +9,34 @@ using System.Threading.Tasks;
 
 namespace BTO218.BrainWorkshop.Helpers
 {
+
+    //Kullanıcılar ile ilgili işlemleri yapan helper
     public static class UserHelper
     {
+        //Geçerli kullanıcının ayarlarını döndüren fonksiyon.
         public static UserSettings LoadSettings(string UserId)
         {
             CreateSettingsIfEmpty();
             if (string.IsNullOrEmpty(UserId))
-                UserId = "default";
+                UserId = "default"; // Eğer kullanıcının ilk girişi ise id'sini default veriyorum.
             var allSettings = LoadAllSettings();
-            return allSettings.Count > 1 ? allSettings.FirstOrDefault(x => x.UserId == UserId) : allSettings.First();
+            if (allSettings.Count > 1 && UserId != "default")
+                return allSettings.OrderByDescending(x => x.ModifiedDate).FirstOrDefault(); // Son giriş yapan kullanıcıyı tarihe göre bulup döndürüyorum.
+            else
+                return allSettings.OrderByDescending(x => x.ModifiedDate).FirstOrDefault();
 
         }
+        //Kullanıcı DB'si
         private static List<UserSettings> LoadAllSettings()
         {
 
             System.IO.StreamReader sr = new System.IO.StreamReader(AppConfig.UserSettingsPath);
-
             var settings = Newtonsoft.Json.JsonConvert.DeserializeObject<List<UserSettings>>(sr.ReadToEnd());
             sr.Close();
             return settings;
 
         }
+        //Kullanıcılar Json dosyası yoksa oluşturan fonksiyon.
         private static void CreateSettingsIfEmpty()
         {
             if (!File.Exists(AppConfig.UserSettingsPath))
@@ -42,32 +49,17 @@ namespace BTO218.BrainWorkshop.Helpers
                 List<UserSettings> setting = new List<UserSettings>();
                 UserSettings defaultSettings = new UserSettings();
                 defaultSettings.IsPositionEnabled = true;
+                defaultSettings.ModifiedDate = DateTime.Now;
                 defaultSettings.IsColorEnabled = false;
                 defaultSettings.UserId = "default";
+                defaultSettings.Level = 1;
                 setting.Add(defaultSettings);
                 SaveSettings(defaultSettings);
             }
 
         }
-        private static bool _saveSingleSetting(List<UserSettings> settings)
-        {
-            try
-            {
-                string jsonData = JsonConvert.SerializeObject(settings);
-                using (StreamWriter sw = new StreamWriter(AppConfig.UserSettingsPath))
-                {
-                    sw.Write(jsonData);
-                    sw.Close();
-                }
 
-                return true;
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
-        }
-
+        //Kullanıcının ayarlarını JSON'a kayıt eden fonksiyon.
         public static bool SaveSettings(UserSettings settings)
         {
             try
@@ -78,10 +70,12 @@ namespace BTO218.BrainWorkshop.Helpers
                 if (allSettings.Any(x => x.UserId == settings.UserId))
                 {
                     allSettings.RemoveAll(x => x.UserId == settings.UserId);
+                    settings.ModifiedDate = DateTime.Now;
                     allSettings.Add(settings);
                 }
                 else
                 {
+                    settings.ModifiedDate = DateTime.Now;
                     allSettings.Add(settings);
                 }
                 string jsonData = JsonConvert.SerializeObject(allSettings);
@@ -99,14 +93,15 @@ namespace BTO218.BrainWorkshop.Helpers
             }
         }
 
+        //Kullanıcının skorunu Kayıt eden fonksiyon.
         public static bool SaveData(UserSettings settings, int point)
         {
             try
             {
-               
-                using (StreamWriter sw = new StreamWriter(AppConfig.DataPath,true))
+
+                using (StreamWriter sw = new StreamWriter(AppConfig.DataPath, true))
                 {
-                    sw.WriteLine(String.Format("{0};{1};{2};{3};{4};{5}",DateTime.Now.ToShortDateString(),DateTime.Now.ToShortTimeString(),"BELLEK","N-Back Testi",settings.Name+" "+settings.Surname,point));
+                    sw.WriteLine(String.Format("{0};{1};{2};{3};{4};{5}", DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString(), "BELLEK", "N-Back Testi", settings.Name + " " + settings.Surname, point));
                     sw.Close();
                 }
 
@@ -114,9 +109,11 @@ namespace BTO218.BrainWorkshop.Helpers
             }
             catch (Exception ex)
             {
-                
+
                 return false;
             }
         }
+
+
     }
 }

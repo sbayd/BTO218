@@ -10,3 +10,4 @@ D:\Educational\bto218\BrainWorkshop\BTO218.BrainWorkshop\BTO218.BrainWorkshop\ob
 D:\Educational\bto218\BrainWorkshop\BTO218.BrainWorkshop\BTO218.BrainWorkshop\bin\Debug\Newtonsoft.Json.dll
 D:\Educational\bto218\BrainWorkshop\BTO218.BrainWorkshop\BTO218.BrainWorkshop\bin\Debug\Newtonsoft.Json.xml
 D:\Educational\bto218\BrainWorkshop\BTO218.BrainWorkshop\BTO218.BrainWorkshop\obj\Debug\BTO218.BrainWorkshop.GameForm.resources
+D:\Educational\bto218\BrainWorkshop\BTO218.BrainWorkshop\BTO218.BrainWorkshop\obj\Debug\BTO218.BrainWorkshop.SettingsForm.resources

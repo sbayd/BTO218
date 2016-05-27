@@ -22,32 +22,43 @@ namespace BTO218.BrainWorkshop
         }
         MainForm mainForm { get; set; }
         UserSettings uSettings { get; set; }
+        /// <summary>
+        /// Tur sayısı, testte her tur 3 saniye sürüyor, buna göre de 21*3 63 saniyede testin aşaması tamamlanıyor.
+        /// </summary>
         int sessionCount = 21;
+        //N-Back seviyesi
         int nBackLevel = 1;
+        //Geçerli tur
         int currentSession = 1;
+        //Programın çalışıp çalışmadığı
         bool is_running = true;
-        //  int[] answeredSessions = int[20];
+        //Pozisyon - renk bilgilerini tutan materyal listesi.
         List<GameMaterial> materialList = new List<GameMaterial>();
+        //Tur timer'i
         Timer sessionTimer;
+        //Pozisyon ve renk değişimi sırasında kullanılan timer 0.4 saniye gösterim yapar.
         Timer animationTimer;
+        // Mümkün olan eşleşme değişkenleri
         int availableColorMatch, availablePositionMatch, availableTotalMatch, correctMatch = 0;
+        //Yapılan Eşleşme listeleri.
         List<int> usedColorMatches = new List<int>();
         List<int> usedPositionMatches = new List<int>();
         private void GameForm_Load(object sender, EventArgs e)
         {
-            InitGame();
+            InitGame(); // Oyunu hazırlayan fonksiyon.
             sessionTimer = new Timer();
             sessionTimer.Interval = 3000;
             sessionTimer.Tick += sessionTimer_Tick;
             animationTimer = new Timer();
             animationTimer.Interval = 400;
             animationTimer.Tick += animationTimer_Tick;
-            sessionTimer.Start();
+            sessionTimer.Start(); // İlk turu başlatıyoruz.
 
         }
 
         void animationTimer_Tick(object sender, EventArgs e)
         {
+            //bu fonksiyon ekrandaki nesneyi temiziyor.
             //clear First
             game_panel.Refresh();
             animationTimer.Stop();
@@ -55,8 +66,8 @@ namespace BTO218.BrainWorkshop
 
         void sessionTimer_Tick(object sender, EventArgs e)
         {
-            InitSessionText();
-            GetGameMaterial();
+            InitSessionText(); //Geçerli ekrandaki yazıları gösteren fonksiyon
+            GetGameMaterial(); 
             currentSession++;
             animationTimer.Start();
             if (currentSession == sessionCount)
@@ -91,6 +102,7 @@ namespace BTO218.BrainWorkshop
         }
         void GetGameMaterial()
         {
+            // Geçerli turdaki materyali gösteren ve labelleri eski haline getiren fonksiyon.
             lbl_instructions.ForeColor = Color.Black;
             lbl_instructions_2.ForeColor = Color.Black;
             DrawRectangle(materialList[currentSession - 1]);
@@ -115,9 +127,11 @@ namespace BTO218.BrainWorkshop
             this.Text = lbl_game_info.Text;
         }
         private void InitGame()
-        {
+        { 
+            //Oyunu hazırlayan fonksiyon.
             InitGameText();
             materialList.Clear();
+            // Kullanıcının seçtiği oyun modlarına göre aşağıda materyalleri hazırlıyoruz. 
             if (uSettings.IsColorEnabled && uSettings.IsPositionEnabled)
             {
                 while (availableTotalMatch < 10)
@@ -125,7 +139,7 @@ namespace BTO218.BrainWorkshop
             }
             else
             {
-                while (availableTotalMatch < 7)
+                while (availableTotalMatch < 7) 
                 { InitGameMaterialList(); }
             }
 
@@ -134,6 +148,8 @@ namespace BTO218.BrainWorkshop
 
         void InitGameMaterialList()
         {
+            //Materyal listesini hazırlayıp toplam eşleşme sayısını gösteriyoruz.
+            materialList = new List<GameMaterial>();
             Random r = new Random();
             Colorizer c = new Colorizer();
             for (int i = 0; i < sessionCount; i++)
@@ -148,11 +164,11 @@ namespace BTO218.BrainWorkshop
                     materialList.Add(new GameMaterial() { color = Color.Blue, PositionNumber = r.Next(1, 10) });
 
             }
-            InitMatchCounts();
+            InitMatchCounts(); // Toplam eşleşme sayısını hesapla.
         }
         void InitMatchCounts()
         {
-
+            //Materyal listesine ve kullanıcının N-Back seçimine göre yapılabilecek toplam eşleşme sayısı hesaplanıyor. Puanlama buna göre yapılacak.
             for (int i = 0; i < sessionCount - nBackLevel; i++)
             {
                 if (uSettings.IsColorEnabled)
@@ -168,7 +184,7 @@ namespace BTO218.BrainWorkshop
         }
         private void game_panel_Paint(object sender, PaintEventArgs e)
         {
-
+            // EMPTY 
         }
 
         private void game_panel_Click(object sender, EventArgs e)
@@ -176,10 +192,10 @@ namespace BTO218.BrainWorkshop
             switch (((MouseEventArgs)e).Button)
             {
                 case System.Windows.Forms.MouseButtons.Right:
-                    RightButtonClicked();
+                    RightButtonClicked(); // Sağ tuş tıklandı
                     break;
                 default:
-                    LeftButtonClicked();
+                    LeftButtonClicked();  // Sol tuş tıklandı.
                     break;
 
 
@@ -188,6 +204,7 @@ namespace BTO218.BrainWorkshop
         }
         void LeftButtonClicked()
         {
+            //Oyun türüne göre kontrollerin yapılıp eşleşme olup olmadığını kontrol ediyoruz.
             if (!is_running)
                 return;
             if (uSettings.IsColorEnabled && uSettings.IsPositionEnabled)
@@ -213,6 +230,8 @@ namespace BTO218.BrainWorkshop
         }
         void RightButtonClicked()
         {
+            //Oyun türüne göre kontrollerin yapılıp eşleşme olup olmadığını kontrol ediyoruz.
+
             if (!is_running)
                 return;
             if (uSettings.IsColorEnabled && uSettings.IsPositionEnabled)
@@ -226,7 +245,7 @@ namespace BTO218.BrainWorkshop
         }
         public void DrawRectangle(GameMaterial material)
         {
-
+            //verilen materyale göre ekranda gösterim yapıyurz.
             using (Graphics g = this.game_panel.CreateGraphics())
             {
                 int rowNumber = (((double)material.PositionNumber) / 3) % 1 == 0 ?
@@ -242,9 +261,10 @@ namespace BTO218.BrainWorkshop
 
         void InitSessionText()
         {
+            //Geçerli ekrandaki yazıları gösteren fonksiyon
             lbl_object_info.Text = String.Format("{0} / {1}", currentSession, sessionCount - 1);
         }
-
+        //Durdur butonu tıklanırsa değişkenleri ayarlıyoruz.
         private void btn_pause_Click(object sender, EventArgs e)
         {
             if (is_running)
@@ -262,20 +282,19 @@ namespace BTO218.BrainWorkshop
             }
 
         }
-
+        //Ana ekrana dönüyoruz.
         private void btn_main_Click(object sender, EventArgs e)
         {
             mainForm.Show();
             this.Close();
         }
+        //timerları kapatıyoruz.
         private void GameForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             animationTimer.Stop();
             sessionTimer.Stop();
         }
-
-
-
+        // aşağıdaki fonksiyonlar eşleşme var mı diye kontrol ediyor.
         bool IsColorMatch()
         {
             if (usedColorMatches.Contains(currentSession - 2))
@@ -333,6 +352,7 @@ namespace BTO218.BrainWorkshop
 
         }
 
+        //Label'in renk değşşim fonksiyonu
         void BlindLabel(Label lbl, Color color)
         {
             lbl.ForeColor = color;
@@ -346,6 +366,7 @@ namespace BTO218.BrainWorkshop
             t1.Start();
         }
 
+        // Çıkış fonksiyonu
         private void btn_exit_Click(object sender, EventArgs e)
         {
             Application.Exit();

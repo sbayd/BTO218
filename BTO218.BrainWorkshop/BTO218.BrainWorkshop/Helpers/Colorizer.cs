@@ -7,8 +7,10 @@ using System.Threading.Tasks;
 
 namespace BTO218.BrainWorkshop.Helpers
 {
+
+    //Programda kullandığımız renkleri veren helper.
     public class Colorizer
-    {            
+    {
         Random r = new Random();
 
         public Colorizer()
@@ -21,6 +23,8 @@ namespace BTO218.BrainWorkshop.Helpers
 
         }
         private Color[] colorArray;
+
+        //Tanımlı renkler arasından rastgele renk veren fonksiyon.
         public Color getRandomColor()
         {
             return colorArray[r.Next(0, 4)];

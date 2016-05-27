@@ -48,7 +48,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Activities\GameBaseActivity.cs" />
     <Compile Include="GameForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -56,6 +55,7 @@
       <DependentUpon>GameForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Helpers\Colorizer.cs" />
+    <Compile Include="Helpers\ConfigHelper.cs" />
     <Compile Include="Helpers\UserHelper.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
@@ -64,10 +64,16 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Objects\AppConfig.cs" />
-    <Compile Include="Objects\RectanglePosition.cs" />
+    <Compile Include="Objects\GameMaterial.cs" />
     <Compile Include="Objects\UserSettings.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SettingsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SettingsForm.Designer.cs">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="GameForm.resx">
       <DependentUpon>GameForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -83,6 +89,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="SettingsForm.resx">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
